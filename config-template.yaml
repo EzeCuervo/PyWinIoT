@@ -1,0 +1,13 @@
+mqtt_server:
+  server: "ip or url from mqtt broker"
+  port: 1883
+  userName: "username"
+  password: "password"
+
+apps:
+  plex:
+    path: "C:\\Program Files (x86)\\Plex\\Plex Media Server\\"
+    process: "Plex Media Server.exe"
+  utorrent:
+    path: "C:\\Program Files (x86)\\uTorrent\\"
+    process: "uTorrent.exe"
