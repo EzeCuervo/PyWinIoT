@@ -40,14 +40,17 @@ def on_connect(client, userdata, flags, rc):
     # reconnect then subscriptions will be renewed.
     for key, value in apps.items():
         client.subscribe(settings.get("name")+"/agent/"+value.get("name")+"/start")
+        client.subscribe(settings.get("name")+"/agent/"+value.get("name")+"/stop")
         if settings.get("debug") == True :
             print("Topic suscribed on: " + settings.get("name")+"/agent/"+value.get("name")+"/start")
+            print("Topic suscribed on: " + settings.get("name")+"/agent/"+value.get("name")+"/stop")
     
 # The callback for when a PUBLISH message is received from the server.str(msg.payload)
 def on_message(client, userdata, msg):
     if settings.get("debug") == True :
         print(msg.topic + " recieved a package.")
     for key, value in apps.items():
+        # Start an application
         if msg.topic == str(settings.get("name")+"/agent/"+value.get("name")+"/start"):
             # Check if the process to be excecuted is already started
             psRunning = False
@@ -65,6 +68,16 @@ def on_message(client, userdata, msg):
             else:
                 if settings.get("debug") == True :
                     print(value.get('process') + " is already running on " + settings.get("name"))
+        # Stop an application
+        if msg.topic == str(settings.get("name")+"/agent/"+value.get("name")+"/stop"):
+            # Check if the process to be excecuted is already started
+            psRunning = False
+            for proc in psutil.process_iter(['pid', 'name', 'username']):
+                if proc.info.get("name") ==  value.get("process"):
+                    if settings.get("debug") == True :
+                        print(proc.info.get("name"))            
+                    os.system("taskkill /im " +  value.get("process"))
+                    break
 
 client = mqtt.Client()
 client.on_connect = on_connect
