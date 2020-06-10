@@ -1,3 +1,7 @@
+settings:
+  name: "server"
+  debug: True
+
 mqtt_server:
   server: "ip or url from mqtt broker"
   port: 1883
@@ -6,8 +10,14 @@ mqtt_server:
 
 apps:
   plex:
+    name: "plex"
     path: "C:\\Program Files (x86)\\Plex\\Plex Media Server\\"
     process: "Plex Media Server.exe"
   utorrent:
+    name: "utorrent"
     path: "C:\\Program Files (x86)\\uTorrent\\"
     process: "uTorrent.exe"
+  spotify:
+    name: "spotify"
+    path: "%APPDATA%\\Spotify\\"
+    process: "Spotify.exe"
