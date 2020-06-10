@@ -1,6 +1,7 @@
 settings:
   name: "server"
   debug: True
+  sensor_time: 5
 
 mqtt_server:
   server: "ip or url from mqtt broker"

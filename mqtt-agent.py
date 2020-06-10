@@ -97,7 +97,7 @@ while True:
     client.publish(settings.get("name")+"/agent/info/uptime", payload=uptimeReal, qos=0, retain=False)
     if settings.get("debug") == True :
         print("publish sent to " + settings.get("name")+"/agent/uptime: " + str(uptimeReal))
-    time.sleep(5)
+    time.sleep(settings.get("sensor_time"))
 
 # Blocking call that processes network traffic, dispatches callbacks and
 # handles reconnecting.
