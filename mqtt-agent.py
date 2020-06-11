@@ -9,6 +9,8 @@ import uptime
 import json
 import datetime
 
+#TBD - MQTT Discovery apps sensor
+#TBD - Set Computer as Entity
 #TBD - Monitor config file changes and refresh values
 
 
@@ -101,7 +103,7 @@ while True:
     uptimeReal = datetime.timedelta(seconds=uptime.uptime())
     infoMsg = { 
         "process": cpuPer,
-        "uptime": str(uptimeReal).split(".")[0].replace(","," ")
+        "uptime": str(uptimeReal).split(".")[0].replace(",","")
         }
     #Publish sensor state
     client.publish("homeassistant/sensor/"+settings.get("name")+"/state", payload=json.dumps(infoMsg), qos=0, retain=False)
