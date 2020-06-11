@@ -101,11 +101,11 @@ def on_message(client, userdata, msg):
                     print(command)                
                 subprocess.Popen(command)
                 os._exit
-                client.publish("homeassistant/switch/"+ settings.get("name") + "/" + value.get("name") + "/state", payload="ON", qos=0, retain=False)
+                client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="ON", qos=0, retain=False)
             else:
                 if settings.get("debug") == True :
                     print(value.get('process') + " is already running on " + settings.get("name"))
-                client.publish("homeassistant/switch/"+ settings.get("name") + "/" + value.get("name") + "/state", payload="ON", qos=0, retain=False)
+                client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="ON", qos=0, retain=False)
         # Stop an application
         if msg.topic == topic and msg.payload == "OFF":
             # Check if the process to be excecuted is already started
@@ -115,9 +115,9 @@ def on_message(client, userdata, msg):
                     if settings.get("debug") == True :
                         print(proc.info.get("name"))            
                     os.system('taskkill /F /im "' +  value.get("process") + '" /T')
-                    client.publish("homeassistant/switch/"+ settings.get("name") + "/" + value.get("name") + "/state", payload="OFF", qos=0, retain=False)
+                    client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="OFF", qos=0, retain=False)
                     break
-
+                
 client = mqtt.Client(client_id=settings.get("name"))
 client.on_connect = on_connect
 client.on_message = on_message
