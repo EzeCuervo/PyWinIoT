@@ -7,6 +7,7 @@ import subprocess
 import sys
 import uptime
 import json
+import datetime
 
 #TBD - Monitor config file changes and refresh values
 
@@ -97,7 +98,7 @@ while True:
     client.publish("homeassistant/sensor/"+settings.get("name")+"U/config", payload=json.dumps(configMsgUptime), qos=0, retain=False)
     # MQTT JSON Message
     cpuPer = str(psutil.cpu_percent(interval=None))
-    uptimeReal = str(uptime.uptime())
+    uptimeReal = datetime.timedelta(seconds=uptime.uptime())
     infoMsg = { 
         "process": cpuPer,
         "uptime": uptimeReal 
