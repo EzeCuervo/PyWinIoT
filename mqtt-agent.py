@@ -51,7 +51,7 @@ def on_connect(client, userdata, flags, rc):
         "icon": "mdi:cpu-64-bit",
         "value_template": "{{ value_json.process}}"
         }
-    client.publish("homeassistant/sensor/"+settings.get("name")+"/config", payload=json.dumps(configMsgProcess), qos=0, retain=False)
+    client.publish("homeassistant/sensor/"+settings.get("name")+"/config", payload=json.dumps(configMsgProcess), qos=0, retain=True)
     configMsgUptime =  {
         "name": settings.get("name") + " uptime",
         "unique_id": settings.get("name")+"_uptime",
@@ -60,7 +60,7 @@ def on_connect(client, userdata, flags, rc):
         "icon": "mdi:timer",
         "value_template": "{{ value_json.uptime}}"
         }
-    client.publish("homeassistant/sensor/"+settings.get("name")+"U/config", payload=json.dumps(configMsgUptime), qos=0, retain=False)
+    client.publish("homeassistant/sensor/"+settings.get("name")+"U/config", payload=json.dumps(configMsgUptime), qos=0, retain=True)
     configMsgMemUsed =  {
         "name": settings.get("name") + " memory used",
         "unique_id": settings.get("name")+"_mem_used",
@@ -69,7 +69,7 @@ def on_connect(client, userdata, flags, rc):
         "icon": "mdi:memory",
         "value_template": "{{ value_json.memUsed}}"
         }
-    client.publish("homeassistant/sensor/"+settings.get("name")+"MU/config", payload=json.dumps(configMsgMemUsed), qos=0, retain=False)
+    client.publish("homeassistant/sensor/"+settings.get("name")+"MU/config", payload=json.dumps(configMsgMemUsed), qos=0, retain=True)
     
     # MQTT Auto Discovery for Home Assistant switches   
     for key, value in apps.items():
@@ -82,11 +82,20 @@ def on_connect(client, userdata, flags, rc):
             "state_topic": "homeassistant/switch/" + settings.get("name") + "/" + topicAppName + "/state",
             "icon":   value.get("md-icon")
             }
-        client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/config", payload=json.dumps(configSwitch), qos=0, retain=False)
+        client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/config", payload=json.dumps(configSwitch), qos=0, retain=True)
         client.subscribe(configSwitch.get("command_topic"))
         if settings.get("debug") == True :
             print("Topic suscribed on: " + configSwitch.get("command_topic"))
-    
+        # Check if the process to be excecuted is already started
+        psRunning = False
+        for proc in psutil.process_iter(['pid', 'name', 'username']):
+            if proc.info.get("name") ==  value.get("process"):
+                psRunning = True
+                client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="ON", qos=0, retain=True)
+                break
+        if psRunning == False:
+            client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="OFF", qos=0, retain=True)
+            break
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
     msg.payload = (msg.payload).decode("utf-8")
@@ -110,11 +119,11 @@ def on_message(client, userdata, msg):
                     print(command)                
                 subprocess.Popen(command)
                 os._exit
-                client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="ON", qos=0, retain=False)
+                client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="ON", qos=0, retain=True)
             else:
                 if settings.get("debug") == True :
                     print(value.get('process') + " is already running on " + settings.get("name"))
-                client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="ON", qos=0, retain=False)
+                client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="ON", qos=0, retain=True)
         # Stop an application
         if msg.topic == topic and msg.payload == "OFF":
             # Check if the process to be excecuted is already started
@@ -124,7 +133,7 @@ def on_message(client, userdata, msg):
                     if settings.get("debug") == True :
                         print(proc.info.get("name"))            
                     os.system('taskkill /F /im "' +  value.get("process") + '" /T')
-                    client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="OFF", qos=0, retain=False)
+                    client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="OFF", qos=0, retain=True)
                     break
                 
 client = mqtt.Client(client_id=settings.get("name"))
@@ -146,7 +155,7 @@ while True:
         "memUsed": memUsed
         }
     #Publish sensor state
-    client.publish("homeassistant/sensor/"+settings.get("name")+"/state", payload=json.dumps(infoMsg), qos=0, retain=False)
+    client.publish("homeassistant/sensor/"+settings.get("name")+"/state", payload=json.dumps(infoMsg), qos=0, retain=True)
     if settings.get("debug") == True :
         print("publish sent to homeassistant/" + settings.get("name")+"/state: " + str(infoMsg))
 
