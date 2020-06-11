@@ -9,10 +9,8 @@ import uptime
 import json
 import datetime
 
-#TBD - MQTT Discovery apps sensor
 #TBD - Set Computer as Entity
 #TBD - Monitor config file changes and refresh values
-
 
 # Import configuration for config.yaml
 config_path = "config.yaml"
@@ -40,23 +38,50 @@ mqttPwd = mqtt_server.get("password")
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
-    print("Connected to " + mqttServer + " result code "+str(rc))
+    print("Connected to: " + mqttServer + " - Result code: "+str(rc))
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
+
+    # MQTT Auto Discovery for Home Assistant sensors
+    configMsgProcess =  {
+        "name": settings.get("name") + " processor used", 
+        "unique_id": settings.get("name")+"_processor_used", 
+        "state_topic": "homeassistant/sensor/"+settings.get("name")+"/state", 
+        "unit_of_measurement": "%", 
+        "value_template": "{{ value_json.process}}" 
+        }
+    client.publish("homeassistant/sensor/"+settings.get("name")+"/config", payload=json.dumps(configMsgProcess), qos=0, retain=False)
+    configMsgUptime =  {
+        "name": settings.get("name") + " uptime",
+        "unique_id": settings.get("name")+"_uptime",
+        "state_topic": "homeassistant/sensor/"+settings.get("name")+"/state",
+        "unit_of_measurement": "",
+        "value_template": "{{ value_json.uptime}}" 
+        }
+    client.publish("homeassistant/sensor/"+settings.get("name")+"U/config", payload=json.dumps(configMsgUptime), qos=0, retain=False)
+    
+    # MQTT Auto Discovery for Home Assistant switchs   
     for key, value in apps.items():
-        client.subscribe(settings.get("name")+"/agent/"+value.get("name")+"/start")
-        client.subscribe(settings.get("name")+"/agent/"+value.get("name")+"/stop")
+        configSwitch = {
+            "name": settings.get("name") + " " + value.get("name"),
+            "unique_id": settings.get("name")+"_"+value.get("name"),
+            "command_topic": "homeassistant/switch/" + settings.get("name") + "/" + value.get("name") + "/set",
+            "state_topic": "homeassistant/switch/" + settings.get("name") + "/" + value.get("name") + "/state"
+            }
+        client.publish("homeassistant/switch/"+ settings.get("name") + "/" + value.get("name") + "/config", payload=json.dumps(configSwitch), qos=0, retain=False)
+        client.subscribe(configSwitch.get("command_topic"))
         if settings.get("debug") == True :
-            print("Topic suscribed on: " + settings.get("name")+"/agent/"+value.get("name")+"/start")
-            print("Topic suscribed on: " + settings.get("name")+"/agent/"+value.get("name")+"/stop")
+            print("Topic suscribed on: " + configSwitch.get("command_topic"))
     
 # The callback for when a PUBLISH message is received from the server.str(msg.payload)
 def on_message(client, userdata, msg):
+    msg.payload = (msg.payload).decode("utf-8")
     if settings.get("debug") == True :
-        print(msg.topic + " recieved a package.")
+        print(msg.topic + " recieved a message: " + msg.payload)
     for key, value in apps.items():
         # Start an application
-        if msg.topic == str(settings.get("name")+"/agent/"+value.get("name")+"/start"):
+        topic = str("homeassistant/switch/" + settings.get("name") + "/" + value.get("name") + "/set")
+        if msg.topic == topic and msg.payload == "ON":
             # Check if the process to be excecuted is already started
             psRunning = False
             for proc in psutil.process_iter(['pid', 'name', 'username']):
@@ -70,11 +95,13 @@ def on_message(client, userdata, msg):
                     print(command)                
                 subprocess.Popen(command)
                 os._exit
+                client.publish("homeassistant/switch/"+ settings.get("name") + "/" + value.get("name") + "/state", payload="ON", qos=0, retain=False)
             else:
                 if settings.get("debug") == True :
                     print(value.get('process') + " is already running on " + settings.get("name"))
+                    client.publish("homeassistant/switch/"+ settings.get("name") + "/" + value.get("name") + "/state", payload="ON", qos=0, retain=False)
         # Stop an application
-        if msg.topic == str(settings.get("name")+"/agent/"+value.get("name")+"/stop"):
+        if msg.topic == topic and msg.payload == "OFF":
             # Check if the process to be excecuted is already started
             psRunning = False
             for proc in psutil.process_iter(['pid', 'name', 'username']):
@@ -82,6 +109,7 @@ def on_message(client, userdata, msg):
                     if settings.get("debug") == True :
                         print(proc.info.get("name"))            
                     os.system('taskkill /F /im "' +  value.get("process") + '" /T')
+                    client.publish("homeassistant/switch/"+ settings.get("name") + "/" + value.get("name") + "/state", payload="OFF", qos=0, retain=False)
                     break
 
 client = mqtt.Client(client_id=settings.get("name"))
@@ -92,12 +120,7 @@ client.connect(mqttServer, mqttPort, 60)
 client.loop_start()
 
 while True:
-    time.sleep(1) 
-    # MQTT Auto Discovery for Home Assistant
-    configMsgProcess =  {"name": settings.get("name") + " processor used", "unique_id": settings.get("name")+"_processor_used", "state_topic": "homeassistant/sensor/"+settings.get("name")+"/state", "unit_of_measurement": "%", "value_template": "{{ value_json.process}}" }
-    client.publish("homeassistant/sensor/"+settings.get("name")+"/config", payload=json.dumps(configMsgProcess), qos=0, retain=False)
-    configMsgUptime =  {"name": settings.get("name") + " uptime", "unique_id": settings.get("name")+"_uptime", "state_topic": "homeassistant/sensor/"+settings.get("name")+"/state", "unit_of_measurement": "", "value_template": "{{ value_json.uptime}}" }
-    client.publish("homeassistant/sensor/"+settings.get("name")+"U/config", payload=json.dumps(configMsgUptime), qos=0, retain=False)
+    time.sleep(3) 
     # MQTT JSON Message
     cpuPer = str(psutil.cpu_percent(interval=None))
     uptimeReal = datetime.timedelta(seconds=uptime.uptime())
