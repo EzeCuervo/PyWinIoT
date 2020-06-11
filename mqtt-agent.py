@@ -85,7 +85,8 @@ def on_message(client, userdata, msg):
         print(msg.topic + " recieved a message: " + msg.payload)
     for key, value in apps.items():
         # Start an application
-        topic = str("homeassistant/switch/" + settings.get("name") + "/" + value.get("name") + "/set")
+        topicAppName = str(value.get("name")).replace(" ","")
+        topic = str("homeassistant/switch/" + settings.get("name") + "/" + topicAppName + "/set")
         if msg.topic == topic and msg.payload == "ON":
             # Check if the process to be excecuted is already started
             psRunning = False
