@@ -101,7 +101,7 @@ while True:
     uptimeReal = datetime.timedelta(seconds=uptime.uptime())
     infoMsg = { 
         "process": cpuPer,
-        "uptime": uptimeReal 
+        "uptime": str(uptimeReal).split(".")[0].replace(","," ")
         }
     #Publish sensor state
     client.publish("homeassistant/sensor/"+settings.get("name")+"/state", payload=json.dumps(infoMsg), qos=0, retain=False)
