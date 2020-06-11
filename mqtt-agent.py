@@ -6,9 +6,9 @@ import time
 import subprocess 
 import sys
 import uptime
+import json
 
 #TBD - Monitor config file changes and refresh values
-
 
 
 # Import configuration for config.yaml
@@ -81,7 +81,7 @@ def on_message(client, userdata, msg):
                     os.system('taskkill /F /im "' +  value.get("process") + '" /T')
                     break
 
-client = mqtt.Client()
+client = mqtt.Client(client_id=settings.get("name"))
 client.on_connect = on_connect
 client.on_message = on_message
 client.username_pw_set(mqttUser,mqttUser)
@@ -89,17 +89,22 @@ client.connect(mqttServer, mqttPort, 60)
 client.loop_start()
 
 while True:
-    time.sleep(1)
-    # TBD - Discovery MQTT Message to HA
-
-    
-    # Send percentage stats
+    time.sleep(1) 
+    # MQTT Auto Discovery for Home Assistant
+    configMsgProcess =  {"name": settings.get("name") + " processor used", "unique_id": settings.get("name")+"_processor_used", "state_topic": "homeassistant/sensor/"+settings.get("name")+"/state", "unit_of_measurement": "%", "value_template": "{{ value_json.process}}" }
+    client.publish("homeassistant/sensor/"+settings.get("name")+"/config", payload=json.dumps(configMsgProcess), qos=0, retain=False)
+    configMsgUptime =  {"name": settings.get("name") + " uptime", "unique_id": settings.get("name")+"_uptime", "state_topic": "homeassistant/sensor/"+settings.get("name")+"/state", "unit_of_measurement": "", "value_template": "{{ value_json.uptime}}" }
+    client.publish("homeassistant/sensor/"+settings.get("name")+"U/config", payload=json.dumps(configMsgUptime), qos=0, retain=False)
+    # MQTT JSON Message
     cpuPer = str(psutil.cpu_percent(interval=None))
-    client.publish("homeassistant/sensor/"+settings.get("name")+"/agent/info/process", payload=cpuPer, qos=0, retain=False)
-    if settings.get("debug") == True :
-        print("publish sent to " + settings.get("name")+"/agent/process: " + cpuPer)
     uptimeReal = str(uptime.uptime())
-    client.publish("homeassistant/sensor/"+settings.get("name")+"/agent/info/uptime", payload=uptimeReal, qos=0, retain=False)
+    infoMsg = { 
+        "process": cpuPer,
+        "uptime": uptimeReal 
+        }
+    #Publish sensor state
+    client.publish("homeassistant/sensor/"+settings.get("name")+"/state", payload=json.dumps(infoMsg), qos=0, retain=False)
     if settings.get("debug") == True :
-        print("publish sent to " + settings.get("name")+"/agent/uptime: " + str(uptimeReal))
+        print("publish sent to homeassistant/" + settings.get("name")+"/state: " + str(infoMsg))
+
     time.sleep(settings.get("sensor_time"))
