@@ -48,7 +48,8 @@ def on_connect(client, userdata, flags, rc):
         "unique_id": settings.get("name")+"_processor_used", 
         "state_topic": "homeassistant/sensor/"+settings.get("name")+"/state", 
         "unit_of_measurement": "%", 
-        "value_template": "{{ value_json.process}}" 
+        "icon": "mdi:cpu-64-bit",
+        "value_template": "{{ value_json.process}}"
         }
     client.publish("homeassistant/sensor/"+settings.get("name")+"/config", payload=json.dumps(configMsgProcess), qos=0, retain=False)
     configMsgUptime =  {
@@ -56,20 +57,23 @@ def on_connect(client, userdata, flags, rc):
         "unique_id": settings.get("name")+"_uptime",
         "state_topic": "homeassistant/sensor/"+settings.get("name")+"/state",
         "unit_of_measurement": "",
-        "value_template": "{{ value_json.uptime}}" 
+        "icon": "mdi:timer",
+        "value_template": "{{ value_json.uptime}}"
         }
     client.publish("homeassistant/sensor/"+settings.get("name")+"U/config", payload=json.dumps(configMsgUptime), qos=0, retain=False)
     
     # MQTT Auto Discovery for Home Assistant switches   
     for key, value in apps.items():
+        uniqueID = str(value.get("name")).replace(" ","_")
+        topicAppName = str(value.get("name")).replace(" ","")
         configSwitch = {
             "name": settings.get("name") + " " + value.get("name"),
-            "unique_id": settings.get("name")+"_"+value.get("name"),
-            "command_topic": "homeassistant/switch/" + settings.get("name") + "/" + value.get("name") + "/set",
-            "state_topic": "homeassistant/switch/" + settings.get("name") + "/" + value.get("name") + "/state",
+            "unique_id": settings.get("name")+"_" + uniqueID,
+            "command_topic": "homeassistant/switch/" + settings.get("name") + "/" + topicAppName + "/set",
+            "state_topic": "homeassistant/switch/" + settings.get("name") + "/" + topicAppName + "/state",
             "icon":   value.get("md-icon")
             }
-        client.publish("homeassistant/switch/"+ settings.get("name") + "/" + value.get("name") + "/config", payload=json.dumps(configSwitch), qos=0, retain=False)
+        client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/config", payload=json.dumps(configSwitch), qos=0, retain=False)
         client.subscribe(configSwitch.get("command_topic"))
         if settings.get("debug") == True :
             print("Topic suscribed on: " + configSwitch.get("command_topic"))
