@@ -60,13 +60,14 @@ def on_connect(client, userdata, flags, rc):
         }
     client.publish("homeassistant/sensor/"+settings.get("name")+"U/config", payload=json.dumps(configMsgUptime), qos=0, retain=False)
     
-    # MQTT Auto Discovery for Home Assistant switchs   
+    # MQTT Auto Discovery for Home Assistant switches   
     for key, value in apps.items():
         configSwitch = {
             "name": settings.get("name") + " " + value.get("name"),
             "unique_id": settings.get("name")+"_"+value.get("name"),
             "command_topic": "homeassistant/switch/" + settings.get("name") + "/" + value.get("name") + "/set",
-            "state_topic": "homeassistant/switch/" + settings.get("name") + "/" + value.get("name") + "/state"
+            "state_topic": "homeassistant/switch/" + settings.get("name") + "/" + value.get("name") + "/state",
+            "icon":   value.get("md-icon")
             }
         client.publish("homeassistant/switch/"+ settings.get("name") + "/" + value.get("name") + "/config", payload=json.dumps(configSwitch), qos=0, retain=False)
         client.subscribe(configSwitch.get("command_topic"))

@@ -1,5 +1,5 @@
 settings:
-  name: "server"
+  name: "Server"
   debug: True
   sensor_time: 5
 
@@ -11,14 +11,16 @@ mqtt_server:
 
 apps:
   plex:
-    name: "plex"
+    name: "Plex Media Server"
     path: "C:\\Program Files (x86)\\Plex\\Plex Media Server\\"
     process: "Plex Media Server.exe"
+    md-icon: "mdi:plex"
   utorrent:
-    name: "utorrent"
+    name: "uTorrent"
     path: "C:\\Program Files (x86)\\uTorrent\\"
     process: "uTorrent.exe"
   spotify:
-    name: "spotify"
+    name: "Spotify"
     path: "%APPDATA%\\Spotify\\"
     process: "Spotify.exe"
+    md-icon: "mdi:spotify"
