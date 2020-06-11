@@ -64,11 +64,11 @@ def on_connect(client, userdata, flags, rc):
     
     # MQTT Auto Discovery for Home Assistant switches   
     for key, value in apps.items():
-        uniqueID = str(value.get("name")).replace(" ","_")
+        uniqueID = settings.get("name")+ "_" + str(value.get("name")).replace(" ","_")
         topicAppName = str(value.get("name")).replace(" ","")
         configSwitch = {
             "name": settings.get("name") + " " + value.get("name"),
-            "unique_id": settings.get("name")+"_" + uniqueID,
+            "unique_id":  uniqueID,
             "command_topic": "homeassistant/switch/" + settings.get("name") + "/" + topicAppName + "/set",
             "state_topic": "homeassistant/switch/" + settings.get("name") + "/" + topicAppName + "/state",
             "icon":   value.get("md-icon")
