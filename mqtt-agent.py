@@ -9,6 +9,8 @@ import uptime
 
 #TBD - Monitor config file changes and refresh values
 
+
+
 # Import configuration for config.yaml
 config_path = "config.yaml"
 config_file = open(config_path)
@@ -63,7 +65,7 @@ def on_message(client, userdata, msg):
                 command = str(value.get('path')).replace('%APPDATA%', os.getenv('APPDATA'))+value.get('process')
                 if settings.get("debug") == True :
                     print(command)                
-                subprocess.Popen([command, ""])
+                subprocess.Popen(command)
                 os._exit
             else:
                 if settings.get("debug") == True :
@@ -76,7 +78,7 @@ def on_message(client, userdata, msg):
                 if proc.info.get("name") ==  value.get("process"):
                     if settings.get("debug") == True :
                         print(proc.info.get("name"))            
-                    os.system("taskkill /im " +  value.get("process"))
+                    os.system('taskkill /F /im "' +  value.get("process") + '" /T')
                     break
 
 client = mqtt.Client()
@@ -88,18 +90,16 @@ client.loop_start()
 
 while True:
     time.sleep(1)
+    # TBD - Discovery MQTT Message to HA
+
+    
     # Send percentage stats
     cpuPer = str(psutil.cpu_percent(interval=None))
-    client.publish(settings.get("name")+"/agent/info/process", payload=cpuPer, qos=0, retain=False)
+    client.publish("homeassistant/sensor/"+settings.get("name")+"/agent/info/process", payload=cpuPer, qos=0, retain=False)
     if settings.get("debug") == True :
         print("publish sent to " + settings.get("name")+"/agent/process: " + cpuPer)
     uptimeReal = str(uptime.uptime())
-    client.publish(settings.get("name")+"/agent/info/uptime", payload=uptimeReal, qos=0, retain=False)
+    client.publish("homeassistant/sensor/"+settings.get("name")+"/agent/info/uptime", payload=uptimeReal, qos=0, retain=False)
     if settings.get("debug") == True :
         print("publish sent to " + settings.get("name")+"/agent/uptime: " + str(uptimeReal))
     time.sleep(settings.get("sensor_time"))
-
-# Blocking call that processes network traffic, dispatches callbacks and
-# handles reconnecting.
-# Other loop*() functions are available that give a threaded interface and a
-# manual interface.
