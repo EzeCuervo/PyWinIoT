@@ -61,6 +61,15 @@ def on_connect(client, userdata, flags, rc):
         "value_template": "{{ value_json.uptime}}"
         }
     client.publish("homeassistant/sensor/"+settings.get("name")+"U/config", payload=json.dumps(configMsgUptime), qos=0, retain=False)
+    configMsgMemUsed =  {
+        "name": settings.get("name") + " memory used",
+        "unique_id": settings.get("name")+"_mem_used",
+        "state_topic": "homeassistant/sensor/"+settings.get("name")+"/state",
+        "unit_of_measurement": "%",
+        "icon": "mdi:memory",
+        "value_template": "{{ value_json.memUsed}}"
+        }
+    client.publish("homeassistant/sensor/"+settings.get("name")+"MU/config", payload=json.dumps(configMsgMemUsed), qos=0, retain=False)
     
     # MQTT Auto Discovery for Home Assistant switches   
     for key, value in apps.items():
@@ -78,7 +87,7 @@ def on_connect(client, userdata, flags, rc):
         if settings.get("debug") == True :
             print("Topic suscribed on: " + configSwitch.get("command_topic"))
     
-# The callback for when a PUBLISH message is received from the server.str(msg.payload)
+# The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
     msg.payload = (msg.payload).decode("utf-8")
     if settings.get("debug") == True :
@@ -130,9 +139,11 @@ while True:
     # MQTT JSON Message
     cpuPer = str(psutil.cpu_percent(interval=None))
     uptimeReal = datetime.timedelta(seconds=uptime.uptime())
+    memUsed = psutil.virtual_memory()[2]
     infoMsg = { 
         "process": cpuPer,
-        "uptime": str(uptimeReal).split(".")[0].replace(",","")
+        "uptime": str(uptimeReal).split(".")[0].replace(",",""),
+        "memUsed": memUsed
         }
     #Publish sensor state
     client.publish("homeassistant/sensor/"+settings.get("name")+"/state", payload=json.dumps(infoMsg), qos=0, retain=False)
