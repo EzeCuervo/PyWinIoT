@@ -18,7 +18,7 @@ pip install -r requirements.txt
 After this changes, just run mqtt-agent.py
 
 ```bash
-python mqtt-agent.py
+pythonw mqtt-agent.pyw
 ```
 
 ## Contributing
