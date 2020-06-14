@@ -8,6 +8,9 @@ import sys
 import uptime
 import json
 import datetime
+from PIL import Image
+import pystray
+from pystray import Menu, MenuItem
 
 #TBD - Set Computer as Entity
 #TBD - Monitor config file changes and refresh values
@@ -135,28 +138,50 @@ def on_message(client, userdata, msg):
                     os.system('taskkill /F /im "' +  value.get("process") + '" /T')
                     client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="OFF", qos=0, retain=True)
                     break
-                
-client = mqtt.Client(client_id=settings.get("name"))
-client.on_connect = on_connect
-client.on_message = on_message
-client.username_pw_set(mqttUser,mqttUser)
-client.connect(mqttServer, mqttPort, 60)
-client.loop_start()
 
-while True:
-    time.sleep(3) 
-    # MQTT JSON Message
-    cpuPer = str(psutil.cpu_percent(interval=None))
-    uptimeReal = datetime.timedelta(seconds=uptime.uptime())
-    memUsed = psutil.virtual_memory()[2]
-    infoMsg = { 
-        "process": cpuPer,
-        "uptime": str(uptimeReal).split(".")[0].replace(",",""),
-        "memUsed": memUsed
-        }
-    #Publish sensor state
-    client.publish("homeassistant/sensor/"+settings.get("name")+"/state", payload=json.dumps(infoMsg), qos=0, retain=True)
-    if settings.get("debug") == True :
-        print("publish sent to homeassistant/" + settings.get("name")+"/state: " + str(infoMsg))
 
-    time.sleep(settings.get("sensor_time"))
+def exit_action(icon):
+    icon.visible = False
+    try:
+        sys.exit(0)
+    except SystemExit:
+        print("Program terminated with SystemExit exception")
+    finally:
+        print("Cleanup")
+    icon.stop()
+
+def init_icon():
+    icon = pystray.Icon('PyWIoT')
+    icon.menu = Menu(
+        MenuItem('Exit', lambda : exit_action(icon)),
+    )
+    icon.icon = Image.open("pywiot.png")
+    icon.title = "PyWIoT Agent"
+    icon.run(setup)
+
+def setup(icon):
+    icon.visible = True
+    client = mqtt.Client(client_id=settings.get("name"))
+    client.on_connect = on_connect
+    client.on_message = on_message
+    client.username_pw_set(mqttUser,mqttUser)
+    client.connect(mqttServer, mqttPort, 60)
+    client.loop_start()
+    while icon.visible:
+        time.sleep(3) 
+        # MQTT JSON Message
+        cpuPer = str(psutil.cpu_percent(interval=None))
+        uptimeReal = datetime.timedelta(seconds=uptime.uptime())
+        memUsed = psutil.virtual_memory()[2]
+        infoMsg = { 
+            "process": cpuPer,
+            "uptime": str(uptimeReal).split(".")[0].replace(",",""),
+            "memUsed": memUsed
+            }
+        #Publish sensor state
+        client.publish("homeassistant/sensor/"+settings.get("name")+"/state", payload=json.dumps(infoMsg), qos=0, retain=True)
+        if settings.get("debug") == True :
+            print("publish sent to homeassistant/" + settings.get("name")+"/state: " + str(infoMsg))
+        time.sleep(settings.get("sensor_time"))
+
+init_icon()
