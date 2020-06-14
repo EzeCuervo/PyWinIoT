@@ -151,12 +151,12 @@ def exit_action(icon):
     icon.stop()
 
 def init_icon():
-    icon = pystray.Icon('PyWIoT')
+    icon = pystray.Icon('PyWinIoT')
     icon.menu = Menu(
         MenuItem('Exit', lambda : exit_action(icon)),
     )
-    icon.icon = Image.open("pywiot.png")
-    icon.title = "PyWIoT Agent"
+    icon.icon = Image.open("pywiniot.png")
+    icon.title = "PyWinIoT Agent"
     icon.run(setup)
 
 def setup(icon):
