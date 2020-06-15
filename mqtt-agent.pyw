@@ -2,6 +2,8 @@ import paho.mqtt.client as mqtt
 import yaml
 import os
 import psutil
+import socket
+import re
 import time
 import subprocess 
 import sys
@@ -161,6 +163,18 @@ def init_icon():
 
 def setup(icon):
     icon.visible = True
+    noIpAddress = True
+    ip_segment = settings.get("network")
+    index = ip_segment.rfind(".")
+    pattern = (ip_segment[0:index-1]+"\d").replace(".","\.")
+    while noIpAddress:
+        hostname = socket.gethostname()
+        ip_address = socket.gethostbyname(hostname)
+        if re.match(pattern, ip_address):
+            noIpAddress = False
+            break
+        else:
+            time.sleep(5)
     client = mqtt.Client(client_id=settings.get("name"))
     client.on_connect = on_connect
     client.on_message = on_message
