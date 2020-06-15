@@ -91,16 +91,8 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe(configSwitch.get("command_topic"))
         if settings.get("debug") == True :
             print("Topic suscribed on: " + configSwitch.get("command_topic"))
-        # Check if the process to be excecuted is already started
-        psRunning = False
-        for proc in psutil.process_iter(['pid', 'name', 'username']):
-            if proc.info.get("name") ==  value.get("process"):
-                psRunning = True
-                client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="ON", qos=0, retain=True)
-                break
-        if psRunning == False:
-            client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="OFF", qos=0, retain=True)
-            break
+    process_update_status(client)
+
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
     msg.payload = (msg.payload).decode("utf-8")
@@ -111,13 +103,7 @@ def on_message(client, userdata, msg):
         topicAppName = str(value.get("name")).replace(" ","")
         topic = str("homeassistant/switch/" + settings.get("name") + "/" + topicAppName + "/set")
         if msg.topic == topic and msg.payload == "ON":
-            # Check if the process to be excecuted is already started
-            psRunning = False
-            for proc in psutil.process_iter(['pid', 'name', 'username']):
-                if proc.info.get("name") ==  value.get("process"):
-                    psRunning = True
-                    break
-            if psRunning == False:
+            if process_running(value.get("process")) == False:
                 # Exec command
                 command = str(value.get('path')).replace('%APPDATA%', os.getenv('APPDATA'))+value.get('process')
                 if settings.get("debug") == True :
@@ -132,15 +118,26 @@ def on_message(client, userdata, msg):
         # Stop an application
         if msg.topic == topic and msg.payload == "OFF":
             # Check if the process to be excecuted is already started
-            psRunning = False
-            for proc in psutil.process_iter(['pid', 'name', 'username']):
-                if proc.info.get("name") ==  value.get("process"):
-                    if settings.get("debug") == True :
-                        print(proc.info.get("name"))            
-                    os.system('taskkill /F /im "' +  value.get("process") + '" /T')
-                    client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="OFF", qos=0, retain=True)
-                    break
+            if process_running(value.get("process")):
+                if settings.get("debug") == True :
+                    print(proc.info.get("name"))            
+                os.system('taskkill /F /im "' +  value.get("process") + '" /T')
+                client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="OFF", qos=0, retain=True)
+                break
 
+def process_running(process):
+    for proc in psutil.process_iter(['pid', 'name', 'username']):
+        if proc.info.get("name") ==  process:
+            return True
+    return False
+
+def process_update_status(client):
+    for key, value in apps.items():
+        topicAppName = str(value.get("name")).replace(" ","")
+        if process_running(value.get("process")):
+            client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="ON", qos=0, retain=True)
+        else:
+            client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="OFF", qos=0, retain=True)
 
 def exit_action(icon):
     icon.visible = False
@@ -196,6 +193,7 @@ def setup(icon):
         client.publish("homeassistant/sensor/"+settings.get("name")+"/state", payload=json.dumps(infoMsg), qos=0, retain=True)
         if settings.get("debug") == True :
             print("publish sent to homeassistant/" + settings.get("name")+"/state: " + str(infoMsg))
+        process_update_status(client)
         time.sleep(settings.get("sensor_time"))
 
 init_icon()
