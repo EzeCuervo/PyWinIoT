@@ -1,5 +1,5 @@
 # PyWinIoT
-![PyWinIoT Logo](https://github.com/ezecuervo/PyWinIoT/master/pywiniot.png?raw=true)
+![PyWinIoT Logo](https://github.com/ezecuervo/PyWinIoT/blob/master/pywiniot.png?raw=true)
 
 PyWinIoT is a solution made on Python to monitor and control a Windows machine integrated with Home Assistant via MQTT protocol.
 
@@ -54,12 +54,14 @@ The PyWinIoT icon will appear on taskbar, if you want to close it just right cli
 ![TaskbarIcon](https://i.ibb.co/g41nGkh/pywiniot-taskbar.png)
 
 ## How to control an application
-You have to create new app items below "apps:" on config.yaml i.e.:
+You have to create new app item below "apps:" on your config.yaml i.e.:
   - plex:
     * name: "Plex Media Server"
     * path: "C:\\Program Files (x86)\\Plex\\Plex Media Server\\"
     * process: "Plex Media Server.exe"
     * md-icon: "mdi:plex" (optional, you can set any icon from [Material Design](https://materialdesignicons.com/). You have to set the icon on the same way as you set an icon on Home Assistant)
+
+Save and just run pywiniot.pyw, you will see your new entity inside Home Assistant
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
