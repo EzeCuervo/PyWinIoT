@@ -1,6 +1,20 @@
 # PyWinIoT
+![PyWinIoT Logo](https://github.com/ezecuervo/PyWinIoT/master/pywiniot.png?raw=true)
 
-PyWinIoT is a solution made on Python to monitor and control a Windows machine via MQTT integrated with Home Assistant.
+PyWinIoT is a solution made on Python to monitor and control a Windows machine integrated with Home Assistant via MQTT protocol.
+
+By now, you can monitor:
+- CPU usage %
+- Memory usage %
+- Application status (ON = Running / OFF = Not running)
+
+You can control:
+- Open an application
+- Close an application
+
+You have to define which application do you want to control with PyWinIoT inside config.yaml
+
+When you run PyWinIoT you will see new entities inside your Home Assistant configuration called "Your Computer name" + sensor / switch
 
 ## Installation
 
@@ -13,13 +27,34 @@ pip install -r requirements.txt
 ## Usage
 - Open your firewall on 1883/TCP port for incoming connections
 - Create a copy of change-example.yaml and rename it to config.yaml
-- Open your new config.yaml file and edit the settings there as you wish (explanation - TBD)
+- Open your new config.yaml file and edit the settings as you wish.
 
-After this changes, just run mqtt-agent.py
+## Required settings on config.yaml
+Below settings: 
+- name: "ComputerName" (Computer name must be without spaces)
+- network: you have to enter your network address. i.e. 192.168.1.1 (This is used to check network ip address before try MQTT connection)
+
+Below mqtt-server:
+- server: "ip or url from mqtt broker"
+- port: 1883
+- userName: "username"
+- password: "password"
+
+After this changes, just run pywiniot.pyw with double click or:
 
 ```bash
-pythonw mqtt-agent.pyw
+pythonw pywiniot.pyw
 ```
+
+The PyWinIoT icon will appear on taskbar, if you want to close it just right click and "Exit".
+
+## How to control an application
+You have to create new app items below "apps:" on config.yaml i.e.:
+  - plex:
+    * name: "Plex Media Server"
+    * path: "C:\\Program Files (x86)\\Plex\\Plex Media Server\\"
+    * process: "Plex Media Server.exe"
+    * md-icon: "mdi:plex" (optional, you can set any icon from [Material Design](https://materialdesignicons.com/). You have to set the icon on the same way as you set an icon on Home Assistant)
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
