@@ -13,8 +13,11 @@ import datetime
 from PIL import Image
 import pystray
 from pystray import Menu, MenuItem
+import logging
+
 
 #TBD - Set Computer as Entity
+
 #TBD - Monitor config file changes and refresh values
 
 # Import configuration for config.yaml
@@ -35,6 +38,12 @@ for key, value in config.items():
     if key == "apps":
         apps = value
 
+# Set log file
+if settings.get("debug"):
+    logging.basicConfig(filename='logs/logfile-' + settings.get("name") + '.log', level=logging.DEBUG, format='%(asctime)s %(message)s')
+else:    
+    logging.basicConfig(filename='logs/logfile-' + settings.get("name") + '.log', level=logging.INFO, format='%(asctime)s %(message)s')
+
 # Set MQTT parameters
 mqttServer = mqtt_server.get("server")
 mqttPort = mqtt_server.get("port")
@@ -43,7 +52,7 @@ mqttPwd = mqtt_server.get("password")
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
-    print("Connected to: " + mqttServer + " - Result code: "+str(rc))
+    logging.info("Connected to: " + mqttServer + " - Result code: "+str(rc))
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
 
@@ -89,15 +98,13 @@ def on_connect(client, userdata, flags, rc):
             }
         client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/config", payload=json.dumps(configSwitch), qos=0, retain=True)
         client.subscribe(configSwitch.get("command_topic"))
-        if settings.get("debug") == True :
-            print("Topic suscribed on: " + configSwitch.get("command_topic"))
+        logging.info("Topic suscribed on: " + configSwitch.get("command_topic"))
     process_update_status(client)
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
     msg.payload = (msg.payload).decode("utf-8")
-    if settings.get("debug") == True :
-        print(msg.topic + " recieved a message: " + msg.payload)
+    logging.info(msg.topic + " recieved a message: " + msg.payload)
     for key, value in apps.items():
         # Start an application
         topicAppName = str(value.get("name")).replace(" ","")
@@ -106,23 +113,23 @@ def on_message(client, userdata, msg):
             if process_running(value.get("process")) == False:
                 # Exec command
                 command = str(value.get('path')).replace('%APPDATA%', os.getenv('APPDATA'))+value.get('process')
-                if settings.get("debug") == True :
-                    print(command)                
+                logging.debug("Command to open app: " + command)                
                 subprocess.Popen(command)
                 os._exit
-                client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="ON", qos=0, retain=True)
+                cp = client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="ON", qos=0, retain=True)
+                if process_running(value.get("process")):
+                    logging.info(value.get('process') + " started.")
             else:
-                if settings.get("debug") == True :
-                    print(value.get('process') + " is already running on " + settings.get("name"))
+                logging.info(value.get('process') + " is already running.")
                 client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="ON", qos=0, retain=True)
         # Stop an application
         if msg.topic == topic and msg.payload == "OFF":
             # Check if the process to be excecuted is already started
-            if process_running(value.get("process")):
-                if settings.get("debug") == True :
-                    print(proc.info.get("name"))            
+            if process_running(value.get("process")):            
                 os.system('taskkill /F /im "' +  value.get("process") + '" /T')
                 client.publish("homeassistant/switch/"+ settings.get("name") + "/" + topicAppName + "/state", payload="OFF", qos=0, retain=True)
+                if not process_running(value.get("process")):
+                    logging.info(value.get('process') + " finished.")
                 break
 
 def process_running(process):
@@ -191,8 +198,7 @@ def setup(icon):
             }
         #Publish sensor state
         client.publish("homeassistant/sensor/"+settings.get("name")+"/state", payload=json.dumps(infoMsg), qos=0, retain=True)
-        if settings.get("debug") == True :
-            print("publish sent to homeassistant/" + settings.get("name")+"/state: " + str(infoMsg))
+        logging.debug("publish sent to homeassistant/" + settings.get("name")+"/state: " + str(infoMsg))
         process_update_status(client)
         time.sleep(settings.get("sensor_time"))
 
