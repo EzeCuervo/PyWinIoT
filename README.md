@@ -1,7 +1,7 @@
 # PyWinIoT
-![PyWinIoT Logo](https://github.com/ezecuervo/PyWinIoT/blob/master/pywiniot.png?raw=true)
+![PyWinIoT Logo](https://github.com/ezecuervo/PyWinIoT/master/pywiniot.png?raw=true)
 
-PyWinIoT is a solution made on Python 3 to monitor and control a Windows machine integrated with Home Assistant via MQTT protocol.
+PyWinIoT is a solution made on Python to monitor and control a Windows machine integrated with Home Assistant via MQTT protocol.
 
 By now, you can monitor:
 - CPU usage %
@@ -13,6 +13,10 @@ You can control:
 - Close an application
 
 You have to define which application do you want to control with PyWinIoT inside config.yaml
+
+## Example
+![HA Example](https://i.ibb.co/K7hpTbf/ha-example.png)
+
 
 When you run PyWinIoT you will see new entities inside your Home Assistant configuration called "Your Computer name" + sensor / switch
 
@@ -47,6 +51,7 @@ pythonw pywiniot.pyw
 ```
 
 The PyWinIoT icon will appear on taskbar, if you want to close it just right click and "Exit".
+![TaskbarIcon](https://i.ibb.co/g41nGkh/pywiniot-taskbar.png)
 
 ## How to control an application
 You have to create new app items below "apps:" on config.yaml i.e.:
