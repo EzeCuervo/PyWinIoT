@@ -1,7 +1,7 @@
 # PyWinIoT
 ![PyWinIoT Logo](https://github.com/ezecuervo/PyWinIoT/blob/master/pywiniot.png?raw=true)
 
-PyWinIoT is a solution made on Python to monitor and control a Windows machine integrated with Home Assistant via MQTT protocol.
+PyWinIoT is a solution made on Python 3 to monitor and control a Windows machine integrated with Home Assistant via MQTT protocol.
 
 By now, you can monitor:
 - CPU usage %
