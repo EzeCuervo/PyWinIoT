@@ -6,6 +6,7 @@ PyWinIoT is a solution made on Python to monitor and control a Windows machine i
 By now, you can monitor:
 - CPU usage %
 - Memory usage %
+- Uptime
 - Application status (ON = Running / OFF = Not running)
 
 You can control:
