@@ -11,6 +11,9 @@ mqtt_server:
   userName: "username"
   password: "password"
 
+ohm:
+  path: "path"
+
 apps:
   plex:
     name: "Plex Media Server"

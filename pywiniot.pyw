@@ -14,7 +14,7 @@ from PIL import Image
 import pystray
 from pystray import Menu, MenuItem
 import logging
-
+import wmi
 
 #TBD - Set Computer as Entity
 
@@ -28,6 +28,7 @@ config = yaml.load(config_file, Loader=yaml.FullLoader)
 mqtt_server = []
 apps = []
 settings = []
+ohm = []
 
 # Get all settings from config.yaml
 for key, value in config.items():
@@ -37,6 +38,8 @@ for key, value in config.items():
         mqtt_server = value
     if key == "apps":
         apps = value
+    if key == "ohm":
+        ohm = value
 
 # Set log file
 if settings.get("debug"):
@@ -49,6 +52,7 @@ mqttServer = mqtt_server.get("server")
 mqttPort = mqtt_server.get("port")
 mqttUser = mqtt_server.get("userName")
 mqttPwd = mqtt_server.get("password")
+os.startfile(ohm.get("path"))
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
@@ -84,6 +88,15 @@ def on_connect(client, userdata, flags, rc):
         "value_template": "{{ value_json.memUsed}}"
         }
     client.publish("homeassistant/sensor/"+settings.get("name")+"MU/config", payload=json.dumps(configMsgMemUsed), qos=0, retain=True)
+    configMsgCPUTemp =  {
+        "name": settings.get("name") + " CPU Temp",
+        "unique_id": settings.get("name")+"_cpu_temp",
+        "state_topic": "homeassistant/sensor/"+settings.get("name")+"/state",
+        "unit_of_measurement": "°C",
+        "icon": "mdi:temperature",
+        "value_template": "{{ value_json.CPUTemp}}"
+        }
+    client.publish("homeassistant/sensor/"+settings.get("name")+"CPUTemp/config", payload=json.dumps(configMsgCPUTemp), qos=0, retain=True)
     
     # MQTT Auto Discovery for Home Assistant switches   
     for key, value in apps.items():
@@ -186,15 +199,23 @@ def setup(icon):
     client.connect(mqttServer, mqttPort, 60)
     client.loop_start()
     while icon.visible:
-        time.sleep(3) 
+        time.sleep(3)
+        cpuTemp = 2
         # MQTT JSON Message
         cpuPer = str(psutil.cpu_percent(interval=None))
         uptimeReal = datetime.timedelta(seconds=uptime.uptime())
         memUsed = psutil.virtual_memory()[2]
+        w = wmi.WMI(namespace="root\OpenHardwareMonitor")
+        temperature_infos = w.Sensor()
+        for sensor in temperature_infos:
+            if sensor.SensorType==u'Temperature':
+                if 'CPU Package' in sensor.Name:
+                    cpuTemp = sensor.Value
         infoMsg = { 
             "process": cpuPer,
             "uptime": str(uptimeReal).split(".")[0].replace(",",""),
-            "memUsed": memUsed
+            "memUsed": memUsed,
+            "CPUTemp": cpuTemp
             }
         #Publish sensor state
         client.publish("homeassistant/sensor/"+settings.get("name")+"/state", payload=json.dumps(infoMsg), qos=0, retain=True)
