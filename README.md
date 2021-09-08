@@ -56,11 +56,14 @@ The PyWinIoT icon will appear on taskbar, if you want to close it just right cli
 
 ## How to control an application
 You have to create new app item below "apps:" on your config.yaml i.e.:
-    - plex:
-      * name: "Plex Media Server"
-      * path: "C:\\Program Files (x86)\\Plex\\Plex Media Server\\"
-      * process: "Plex Media Server.exe"
-      * md-icon: "mdi:plex" (optional, you can set any icon from [Material Design](https://materialdesignicons.com/). You have to set the icon on the same way as you set an icon on Home Assistant)
+
+        - plex:
+          - name: "Plex Media Server"
+          - path: "C:\\Program Files (x86)\\Plex\\Plex Media Server\\"
+          - process: "Plex Media Server.exe"
+          - md-icon: "mdi:plex"
+
+**Note:** md-icon: is optional. You can set any icon from Material Design(https://materialdesignicons.com/). You have to set the icon on the same way as you set an icon on Home Assistant)
 
 Save and just run pywiniot.pyw, you will see your new entity inside Home Assistant
 
